@@ -18,63 +18,119 @@ jobs:
         java-version: '17'
         distribution: 'temurin'
 
-    - name: Force Fix All Folder Structures
+    - name: Generate Fresh Android Project Architecture
       run: |
-        # Lilinisin nito ang lahat ng maling folder na nagbuhol-buhol
-        mkdir -p clean_app/src/main/java/com/example/dragontigerfloating
-        mkdir -p clean_app/src/main/res/values
-        mkdir -p clean_app/src/main/res/xml
+        # 1. Ganap na buburahin ang lahat ng lumang nagbuhol-buhol na folder
+        rm -rf app settings.gradle build.gradle local.properties gradle.properties AndroidManifest.xml strings.xml
 
-        # Kukunin ang mga tamang java files saanman sila napunta
-        find . -name "MainActivity.java" -exec cp {} clean_app/src/main/java/com/example/dragontigerfloating/ \;
-        find . -name "DragonTigerService.java" -exec cp {} clean_app/src/main/java/com/example/dragontigerfloating/ \;
-        
-        # Kukunin ang resources at manifest
-        find . -name "AndroidManifest.xml" -exec cp {} clean_app/src/main/ \;
-        find . -name "accessibility_service_config.xml" -exec cp {} clean_app/src/main/res/xml/ \;
-        find . -name "strings.xml" -exec cp {} clean_app/src/main/res/values/ \;
+        # 2. Gagawa ng malinis at bagong istruktura ng mga folder
+        mkdir -p app/src/main/java/com/example/dragontigerfloating
+        mkdir -p app/src/main/res/values
+        mkdir -p app/src/main/res/xml
 
-        # Kukunin ang gradle files
-        find . -maxdepth 1 -name "build.gradle" -exec cp {} . \;
-        find . -maxdepth 1 -name "settings.gradle" -exec cp {} . \;
-        find . -maxdepth 2 -name "build.gradle" | grep "/app/" | xargs -I {} cp {} clean_app/build.gradle || true
-        find . -name "local.properties" -exec cp {} . \;
-        find . -name "gradle.properties" -exec cp {} . \;
-        find . -name "proguard-rules.pro" -exec cp {} clean_app/ \;
-
-        # Buburahin ang lumang nagbuhol-buhol na app folder at papalitan ng malinis
-        rm -rf app
-        mv clean_app app
-        
-        # Siguraduhing tama ang laman ng app build.gradle kung nawala
-        if [ ! -s app/build.gradle ]; then
-          cat << 'EOF' > app/build.gradle
-          plugins { id 'com.android.application' }
-          android {
-              namespace 'com.example.dragontigerfloating'
-              compileSdk 34
-              defaultConfig {
-                  applicationId "com.example.dragontigerfloating"
-                  minSdk 24
-                  targetSdk 34
-                  versionCode 1
-                  versionName "1.0"
-              }
-          }
-          dependencies {
-              implementation 'androidx.appcompat:appcompat:1.6.1'
-              implementation 'com.google.android.material:material:1.11.0'
-          }
+        # 3. Gagawa ng settings.gradle sa pinakalabas
+        cat << 'EOF' > settings.gradle
+        pluginManagement { repositories { google(); mavenCentral(); gradlePluginPortal() } }
+        dependencyResolutionManagement { repositoriesMode.set(RepositoriesMode.FAIL_ON_PROJECT_REPOS); repositories { google(); mavenCentral() } }
+        rootProject.name = "dragon-tiger-app"
+        include ':app'
         EOF
-        fi
 
-    - name: Setup Gradle
+        # 4. Gagawa ng top-level build.gradle sa pinakalabas
+        cat << 'EOF' > build.gradle
+        plugins { id 'com.android.application' version '8.2.2' apply false }
+        EOF
+
+        # 5. Gagawa ng app/build.gradle sa loob ng app folder
+        cat << 'EOF' > app/build.gradle
+        plugins { id 'com.android.application' }
+        android {
+            namespace 'com.example.dragontigerfloating'
+            compileSdk 34
+            defaultConfig {
+                applicationId "com.example.dragontigerfloating"
+                minSdk 24
+                targetSdk 34
+                versionCode 1
+                versionName "1.0"
+            }
+        }
+        dependencies {
+            implementation 'androidx.appcompat:appcompat:1.6.1'
+            implementation 'com.google.android.material:material:1.11.0'
+        }
+        EOF
+
+        # 6. Gagawa ng MainActivity.java
+        cat << 'EOF' > app/src/main/java/com/example/dragontigerfloating/MainActivity.java
+        package com.example.dragontigerfloating;
+        import android.os.Bundle;
+        import androidx.appcompat.app.AppCompatActivity;
+        public class MainActivity extends AppCompatActivity {
+            @Override protected void onCreate(Bundle savedInstanceState) { super.onCreate(savedInstanceState); }
+        }
+        EOF
+
+        # 7. Gagawa ng DragonTigerService.java (AccessibilityService)
+        cat << 'EOF' > app/src/main/java/com/example/dragontigerfloating/DragonTigerService.java
+        package com.example.dragontigerfloating;
+        import android.accessibilityservice.AccessibilityService;
+        import android.view.accessibility.AccessibilityEvent;
+        import android.view.accessibility.AccessibilityNodeInfo;
+        import android.util.Log;
+        public class DragonTigerService extends AccessibilityService {
+            @Override public void onAccessibilityEvent(AccessibilityEvent event) {
+                AccessibilityNodeInfo rootNode = getRootInActiveWindow();
+                if (rootNode != null) { Log.d("DragonTiger", "Scanning Screen..."); rootNode.recycle(); }
+            }
+            @Override public void onInterrupt() {}
+        }
+        EOF
+
+        # 8. Gagawa ng AndroidManifest.xml
+        cat << 'EOF' > app/src/main/AndroidManifest.xml
+        <?xml version="1.0" encoding="utf-8"?>
+        <manifest xmlns:android="http://android.com">
+            <application android:allowBackup="true" android:label="Dragon Tiger Reader" android:theme="@style/Theme.AppCompat">
+                <activity android:name="com.example.dragontigerfloating.MainActivity" android:exported="true">
+                    <intent-filter>
+                        <action android:name="android.intent.action.MAIN" />
+                        <category android:name="android.intent.category.LAUNCHER" />
+                    </intent-filter>
+                </activity>
+                <service android:name="com.example.dragontigerfloating.DragonTigerService" android:exported="true" android:permission="android.permission.BIND_ACCESSIBILITY_SERVICE">
+                    <intent-filter><action android:name="android.accessibilityservice.AccessibilityService" /></intent-filter>
+                    <meta-data android:name="android.accessibilityservice" android:resource="@xml/accessibility_service_config" />
+                </service>
+            </application>
+        </manifest>
+        EOF
+
+        # 9. Gagawa ng accessibility_service_config.xml
+        cat << 'EOF' > app/src/main/res/xml/accessibility_service_config.xml
+        <?xml version="1.0" encoding="utf-8"?>
+        <accessibility-service xmlns:android="http://android.com"
+            android:accessibilityEventTypes="typeWindowContentChanged|typeWindowStateChanged"
+            android:accessibilityFeedbackType="feedbackGeneric"
+            android:accessibilityFlags="flagDefault|flagIncludeNotImportantViews|flagRetrieveInteractiveWindows"
+            android:canRetrieveWindowContent="true"
+            android:description="@string/accessibility_description" />
+        EOF
+
+        # 10. Gagawa ng strings.xml
+        cat << 'EOF' > app/src/main/res/values/strings.xml
+        <resources>
+            <string name="accessibility_description">Screen Reader for Dragon Tiger</string>
+        </resources>
+        EOF
+
+    - name: Setup Gradle Environment
       uses: gradle/actions/setup-gradle@v4
 
-    - name: Build APK directly
+    - name: Compile Code to Finished APK
       run: gradle assembleDebug
 
-    - name: Upload Finished APK
+    - name: Upload Finished APK File
       uses: actions/upload-artifact@v4
       with:
         name: dragon-tiger-app-file
