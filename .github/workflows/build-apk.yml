@@ -20,7 +20,7 @@ jobs:
 
     - name: Generate Fresh Android Project Architecture
       run: |
-        # 1. Ganap na buburahin ang lahat ng lumang folder para walang conflict
+        # 1. Ganap na buburahin ang lahat ng lumang folder para walang conflict o kalat
         rm -rf app settings.gradle build.gradle local.properties gradle.properties AndroidManifest.xml strings.xml
 
         # 2. Gagawa ng malinis at bagong istruktura ng mga folder
@@ -87,7 +87,7 @@ jobs:
         }
         EOF
 
-        # 8. Gagawa ng AndroidManifest.xml (Kasama ang kumpletong Android link)
+        # 8. Gagawa ng AndroidManifest.xml (Kasama ang saktong opisyal na link ng schema)
         cat << 'EOF' > app/src/main/AndroidManifest.xml
         <?xml version="1.0" encoding="utf-8"?>
         <manifest xmlns:android="http://android.com">
@@ -106,7 +106,7 @@ jobs:
         </manifest>
         EOF
 
-        # 9. Gagawa ng accessibility_service_config.xml (Kasama ang kumpletong Android link)
+        # 9. Gagawa ng accessibility_service_config.xml (Kasama ang saktong opisyal na link ng schema)
         cat << 'EOF' > app/src/main/res/xml/accessibility_service_config.xml
         <?xml version="1.0" encoding="utf-8"?>
         <accessibility-service xmlns:android="http://android.com"
