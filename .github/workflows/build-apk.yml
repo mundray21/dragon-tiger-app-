@@ -18,14 +18,54 @@ jobs:
         java-version: '17'
         distribution: 'temurin'
 
-    - name: Fix Project Folder Structure
+    - name: Force Fix All Folder Structures
       run: |
-        # Lilinisin at itatama nito ang nagpatong-patong na folders bago mag-build
-        mkdir -p app/src/main/res/xml
-        if [ -f app/src/main/res/xml/app/src/main/AndroidManifest.xml ]; then
-          cp app/src/main/res/xml/app/src/main/AndroidManifest.xml app/src/main/AndroidManifest.xml
-        elif [ -f AndroidManifest.xml ]; then
-          cp AndroidManifest.xml app/src/main/AndroidManifest.xml
+        # Lilinisin nito ang lahat ng maling folder na nagbuhol-buhol
+        mkdir -p clean_app/src/main/java/com/example/dragontigerfloating
+        mkdir -p clean_app/src/main/res/values
+        mkdir -p clean_app/src/main/res/xml
+
+        # Kukunin ang mga tamang java files saanman sila napunta
+        find . -name "MainActivity.java" -exec cp {} clean_app/src/main/java/com/example/dragontigerfloating/ \;
+        find . -name "DragonTigerService.java" -exec cp {} clean_app/src/main/java/com/example/dragontigerfloating/ \;
+        
+        # Kukunin ang resources at manifest
+        find . -name "AndroidManifest.xml" -exec cp {} clean_app/src/main/ \;
+        find . -name "accessibility_service_config.xml" -exec cp {} clean_app/src/main/res/xml/ \;
+        find . -name "strings.xml" -exec cp {} clean_app/src/main/res/values/ \;
+
+        # Kukunin ang gradle files
+        find . -maxdepth 1 -name "build.gradle" -exec cp {} . \;
+        find . -maxdepth 1 -name "settings.gradle" -exec cp {} . \;
+        find . -maxdepth 2 -name "build.gradle" | grep "/app/" | xargs -I {} cp {} clean_app/build.gradle || true
+        find . -name "local.properties" -exec cp {} . \;
+        find . -name "gradle.properties" -exec cp {} . \;
+        find . -name "proguard-rules.pro" -exec cp {} clean_app/ \;
+
+        # Buburahin ang lumang nagbuhol-buhol na app folder at papalitan ng malinis
+        rm -rf app
+        mv clean_app app
+        
+        # Siguraduhing tama ang laman ng app build.gradle kung nawala
+        if [ ! -s app/build.gradle ]; then
+          cat << 'EOF' > app/build.gradle
+          plugins { id 'com.android.application' }
+          android {
+              namespace 'com.example.dragontigerfloating'
+              compileSdk 34
+              defaultConfig {
+                  applicationId "com.example.dragontigerfloating"
+                  minSdk 24
+                  targetSdk 34
+                  versionCode 1
+                  versionName "1.0"
+              }
+          }
+          dependencies {
+              implementation 'androidx.appcompat:appcompat:1.6.1'
+              implementation 'com.google.android.material:material:1.11.0'
+          }
+        EOF
         fi
 
     - name: Setup Gradle
