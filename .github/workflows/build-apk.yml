@@ -87,7 +87,7 @@ jobs:
         }
         EOF
 
-        # 8. Gagawa ng AndroidManifest.xml (Kasama ang saktong opisyal na link ng schema)
+        # 8. Gagawa ng AndroidManifest.xml (Gamit ang saktong opisyal na link ng schema)
         cat << 'EOF' > app/src/main/AndroidManifest.xml
         <?xml version="1.0" encoding="utf-8"?>
         <manifest xmlns:android="http://android.com">
@@ -106,7 +106,7 @@ jobs:
         </manifest>
         EOF
 
-        # 9. Gagawa ng accessibility_service_config.xml (Kasama ang saktong opisyal na link ng schema)
+        # 9. Gagawa ng accessibility_service_config.xml (Gamit ang saktong opisyal na link ng schema)
         cat << 'EOF' > app/src/main/res/xml/accessibility_service_config.xml
         <?xml version="1.0" encoding="utf-8"?>
         <accessibility-service xmlns:android="http://android.com"
